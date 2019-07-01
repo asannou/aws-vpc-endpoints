@@ -1,6 +1,14 @@
-variable "vpc_id" {}
+variable "vpc_id" {
+  type = "string"
+}
 
-variable "service" {}
+variable "subnet_ids" {
+  type = "list"
+}
+
+variable "service" {
+  type = "string"
+}
 
 variable "security_group_ids" {
   type = "list"
@@ -24,22 +32,20 @@ data "aws_subnet_ids" "interface" {
   count = "${length(local.availability_zones)}"
   vpc_id = "${data.aws_vpc.vpc.id}"
   filter {
+    name = "subnet-id"
+    values = ["${var.subnet_ids}"]
+  }
+  filter {
     name = "availability-zone"
     values = ["${local.availability_zones[count.index]}"]
   }
-}
-
-resource "random_shuffle" "subnet" {
-  count = "${length(local.availability_zones)}"
-  input = ["${data.aws_subnet_ids.interface.*.ids[count.index]}"]
-  result_count = 1
 }
 
 resource "aws_vpc_endpoint" "interface" {
   vpc_id = "${data.aws_vpc.vpc.id}"
   service_name = "com.amazonaws.${data.aws_region.region.name}.${var.service}"
   vpc_endpoint_type = "Interface"
-  subnet_ids = ["${flatten(random_shuffle.subnet.*.result)}"]
+  subnet_ids = ["${flatten(data.aws_subnet_ids.interface.*.ids)}"]
   security_group_ids = ["${var.security_group_ids}"]
   private_dns_enabled = true
   tags = {

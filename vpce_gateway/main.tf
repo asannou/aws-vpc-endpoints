@@ -1,6 +1,10 @@
-variable "vpc_id" {}
+variable "vpc_id" {
+  type = "string"
+}
 
-variable "service" {}
+variable "service" {
+  type = "string"
+}
 
 variable "subnet_ids" {
   type = "list"
