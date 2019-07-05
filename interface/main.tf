@@ -16,10 +16,6 @@ variable "security_group_ids" {
 
 data "aws_region" "region" {}
 
-data "aws_vpc" "vpc" {
-  id = "${var.vpc_id}"
-}
-
 data "aws_vpc_endpoint_service" "interface" {
   service_name = "com.amazonaws.${data.aws_region.region.name}.${var.service}"
 }
@@ -30,7 +26,7 @@ locals {
 
 data "aws_subnet_ids" "interface" {
   count = "${length(local.availability_zones)}"
-  vpc_id = "${data.aws_vpc.vpc.id}"
+  vpc_id = "${var.vpc_id}"
   filter {
     name = "subnet-id"
     values = ["${var.subnet_ids}"]
@@ -42,7 +38,7 @@ data "aws_subnet_ids" "interface" {
 }
 
 resource "aws_vpc_endpoint" "interface" {
-  vpc_id = "${data.aws_vpc.vpc.id}"
+  vpc_id = "${var.vpc_id}"
   service_name = "com.amazonaws.${data.aws_region.region.name}.${var.service}"
   vpc_endpoint_type = "Interface"
   subnet_ids = ["${flatten(data.aws_subnet_ids.interface.*.ids)}"]
