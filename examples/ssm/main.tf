@@ -34,10 +34,17 @@ module "ec2" {
   security_group_ids = ["${module.common.security_group_id}"]
 }
 
+data "aws_route_tables" "gateway" {
+  filter {
+    name = "association.subnet-id"
+    values = ["${var.s3_subnet_ids}"]
+  }
+}
+
 module "s3" {
   source = "github.com/asannou/terraform-aws-vpce//gateway"
   vpc_id = "${var.vpc_id}"
   service = "s3"
-  subnet_ids = ["${var.s3_subnet_ids}"]
+  route_table_ids = ["${data.aws_route_tables.gateway.ids}"]
 }
 
