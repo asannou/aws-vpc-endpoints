@@ -10,18 +10,18 @@ data "aws_vpc" "vpc" {
   id = "${var.vpc_id}"
 }
 
-data "external" "subnet" {
-  program = ["/bin/bash", "${path.module}/calc_subnet_cidr.sh"]
-  query = {
-    vpc_cidr = "${data.aws_vpc.vpc.cidr_block}"
-  }
+locals {
+  vpc_cidr_prefix_length = "${element(split("/", data.aws_vpc.vpc.cidr_block), 1)}"
+  newbits = "${24 - local.vpc_cidr_prefix_length}"
+  netnum = "${pow(2, 24 - local.vpc_cidr_prefix_length) - 2}"
+  cidr_block = "${cidrsubnet(data.aws_vpc.vpc.cidr_block, local.newbits, local.netnum)}"
 }
 
 resource "aws_subnet" "vpce" {
   count = "${length(data.aws_availability_zones.az.names)}"
   vpc_id = "${data.aws_vpc.vpc.id}"
   availability_zone = "${data.aws_availability_zones.az.names[count.index]}"
-  cidr_block = "${cidrsubnet(data.external.subnet.result.subnet_cidr, 3, 7 - count.index)}"
+  cidr_block = "${cidrsubnet(local.cidr_block, 3, 7 - count.index)}"
   tags = {
     Name = "vpce-${data.aws_availability_zones.az.names[count.index]}"
   }
