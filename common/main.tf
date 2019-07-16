@@ -2,6 +2,11 @@ variable "vpc_id" {
   type = string
 }
 
+variable "cidr_block" {
+  type = string
+  default = null
+}
+
 data "aws_availability_zones" "az" {
   state = "available"
 }
@@ -14,7 +19,7 @@ locals {
   vpc_cidr_prefix_length = split("/", data.aws_vpc.vpc.cidr_block)[1]
   newbits                = 24 - local.vpc_cidr_prefix_length
   netnum                 = pow(2, 24 - local.vpc_cidr_prefix_length) - 2
-  cidr_block             = cidrsubnet(data.aws_vpc.vpc.cidr_block, local.newbits, local.netnum)
+  cidr_block             = var.cidr_block != null ? var.cidr_block : cidrsubnet(data.aws_vpc.vpc.cidr_block, local.newbits, local.netnum)
 }
 
 resource "aws_subnet" "vpce" {
