@@ -22,14 +22,14 @@ module "common" {
 module "ssm" {
   source = "github.com/asannou/terraform-aws-vpce//ssm"
   vpc_id = "${var.vpc_id}"
-  subnet_ids = ["${module.common.subnet_ids}"]
+  subnet_ids = "${module.common.subnet_ids}"
   security_group_ids = ["${module.common.security_group_id}"]
 }
 
 module "ec2" {
   source = "github.com/asannou/terraform-aws-vpce//interface"
   vpc_id = "${var.vpc_id}"
-  subnet_ids = ["${module.common.subnet_ids}"]
+  subnet_ids = "${module.common.subnet_ids}"
   service = "ec2"
   security_group_ids = ["${module.common.security_group_id}"]
 }

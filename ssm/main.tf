@@ -3,7 +3,7 @@ variable "vpc_id" {
 }
 
 variable "subnet_ids" {
-  type = "list"
+  type = "map"
 }
 
 variable "security_group_ids" {
@@ -13,7 +13,7 @@ variable "security_group_ids" {
 module "ssm" {
   source = "../interface"
   vpc_id = "${var.vpc_id}"
-  subnet_ids = ["${var.subnet_ids}"]
+  subnet_ids = "${var.subnet_ids}"
   service = "ssm"
   security_group_ids = ["${var.security_group_ids}"]
 }
@@ -21,7 +21,7 @@ module "ssm" {
 module "ec2messages" {
   source = "../interface"
   vpc_id = "${var.vpc_id}"
-  subnet_ids = ["${var.subnet_ids}"]
+  subnet_ids = "${var.subnet_ids}"
   service = "ec2messages"
   security_group_ids = ["${var.security_group_ids}"]
 }
@@ -29,7 +29,7 @@ module "ec2messages" {
 module "ssmmessages" {
   source = "../interface"
   vpc_id = "${var.vpc_id}"
-  subnet_ids = ["${var.subnet_ids}"]
+  subnet_ids = "${var.subnet_ids}"
   service = "ssmmessages"
   security_group_ids = ["${var.security_group_ids}"]
 }

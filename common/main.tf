@@ -7,6 +7,11 @@ variable "cidr_block" {
   default = ""
 }
 
+variable "availability_zones" {
+  type = "list"
+  default = []
+}
+
 data "aws_availability_zones" "az" {
   state = "available"
 }
@@ -20,15 +25,18 @@ locals {
   newbits = "${24 - local.vpc_cidr_prefix_length}"
   netnum = "${pow(2, 24 - local.vpc_cidr_prefix_length) - 2}"
   cidr_block = "${var.cidr_block != "" ? var.cidr_block : cidrsubnet(data.aws_vpc.vpc.cidr_block, local.newbits, local.netnum)}"
+  availability_zones = "${split(",", length(var.availability_zones) > 0 ? join(",", var.availability_zones) : join(",", data.aws_availability_zones.az.names))}"
+  count = "${length(local.availability_zones)}"
+  sub_newbits = "${ceil(log(local.count, 2))}"
 }
 
 resource "aws_subnet" "vpce" {
-  count = "${length(data.aws_availability_zones.az.names)}"
+  count = "${local.count}"
   vpc_id = "${data.aws_vpc.vpc.id}"
-  availability_zone = "${data.aws_availability_zones.az.names[count.index]}"
-  cidr_block = "${cidrsubnet(local.cidr_block, 3, 7 - count.index)}"
+  availability_zone = "${local.availability_zones[count.index]}"
+  cidr_block = "${cidrsubnet(local.cidr_block, local.sub_newbits, count.index)}"
   tags = {
-    Name = "vpce-${data.aws_availability_zones.az.names[count.index]}"
+    Name = "vpce-${local.availability_zones[count.index]}"
   }
 }
 
@@ -47,7 +55,7 @@ resource "aws_security_group" "vpce" {
 }
 
 output "subnet_ids" {
-  value = ["${aws_subnet.vpce.*.id}"]
+  value = "${zipmap(local.availability_zones, aws_subnet.vpce.*.id)}"
 }
 
 output "security_group_id" {

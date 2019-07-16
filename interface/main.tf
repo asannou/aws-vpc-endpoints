@@ -3,7 +3,7 @@ variable "vpc_id" {
 }
 
 variable "subnet_ids" {
-  type = "list"
+  type = "map"
 }
 
 variable "service" {
@@ -22,26 +22,14 @@ data "aws_vpc_endpoint_service" "interface" {
 
 locals {
   availability_zones = "${data.aws_vpc_endpoint_service.interface.availability_zones}"
-}
-
-data "aws_subnet_ids" "interface" {
-  count = "${length(local.availability_zones)}"
-  vpc_id = "${var.vpc_id}"
-  filter {
-    name = "subnet-id"
-    values = ["${var.subnet_ids}"]
-  }
-  filter {
-    name = "availability-zone"
-    values = ["${local.availability_zones[count.index]}"]
-  }
+  subnet_ids = "${matchkeys(values(var.subnet_ids), keys(var.subnet_ids), local.availability_zones)}"
 }
 
 resource "aws_vpc_endpoint" "interface" {
   vpc_id = "${var.vpc_id}"
   service_name = "com.amazonaws.${data.aws_region.region.name}.${var.service}"
   vpc_endpoint_type = "Interface"
-  subnet_ids = ["${flatten(data.aws_subnet_ids.interface.*.ids)}"]
+  subnet_ids = ["${local.subnet_ids}"]
   security_group_ids = ["${var.security_group_ids}"]
   private_dns_enabled = true
   tags = {
