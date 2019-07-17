@@ -7,12 +7,12 @@ variable "service" {
 }
 
 variable "route_table_ids" {
-  type = list(string)
+  type    = list(string)
   default = []
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type    = list(string)
   default = []
 }
 
